@@ -33,6 +33,7 @@ right_idx = [12, 14, 16]
 
 release_state = False
 angle_record = []
+left_angle, right_angle = 0, 0
 prev_left_angle = 0
 prev_right_angle = 0
 right = False
