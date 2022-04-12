@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
-frame_shape = (640, 480)
-half_width = frame_shape[0] // 2
+
+left_idx = [11, 13, 15]
+right_idx = [12, 14, 16]
 
 def holistics(result, frame_shape):
     if result.face_landmarks is None:
@@ -88,9 +89,9 @@ def draw_armline(image, pose_lms, idx):
         1, cv2.LINE_AA
     )
 
-def get_angle_board(graphboard, angle_list, before_angle, before_idx):
+def get_angle_board(graphboard, frame_shape, angle_list, before_angle, before_idx):
     angle_list = angle_list[1:]
-    point = np.array([frame_shape[1]-100] * half_width)
+    point = np.array([frame_shape[1]-100] * (frame_shape[0] // 2))
 
     point_angle = point - np.array(angle_list)
 
@@ -110,6 +111,6 @@ def get_angle_board(graphboard, angle_list, before_angle, before_idx):
 
     return angle_list, before_idx, before_angle
 
-def putText_graph(graphboard, side, angle):
+def putText_graph(graphboard, frame_shape, side, angle):
     cv2.putText(graphboard, f'{side}', (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 0, 255), 1)
-    cv2.putText(graphboard, f'angle:{angle}', (half_width // 2, frame_shape[1]-20), cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 0, 255), 1)
+    cv2.putText(graphboard, f'angle:{angle}', ((frame_shape[0] // 2) // 2, frame_shape[1]-20), cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 0, 255), 1)

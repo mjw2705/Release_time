@@ -1,8 +1,8 @@
 # pyinstaller --icon=icon-archery.ico release_angle.py
 import time
-from turtle import right
 import cv2
 import numpy as np
+import mediapipe as mp
 
 from utils import *
 
@@ -16,10 +16,10 @@ holistic = mp.solutions.holistic.Holistic(static_image_mode=False,
 pose = mp.solutions.pose.Pose(min_detection_confidence=0.5,
                                 min_tracking_confidence=0.5)
 
-# camera_id = int(input("카메라 번호 입력: "))
-ptime = 0
-frame_w = frame_shape[0]
-frame_h = frame_shape[1]
+
+frame_shape = (640, 480)
+frame_w, frame_h = frame_shape
+half_w = frame_w // 2
 
 backboard = np.zeros((frame_h * 2, frame_w, 3), np.uint8)
 
@@ -28,37 +28,31 @@ before_angle = 0
 left_angle_list = [0] * (frame_w // 2)
 right_angle_list = [0] * (frame_w // 2)
 
-left_idx = [11, 13, 15]
-right_idx = [12, 14, 16]
-
-release_state = False
 angle_record = []
+release_state = False
 left_angle, right_angle = 0, 0
-prev_left_angle = 0
-prev_right_angle = 0
-right = False
-left = False
-sec = 0
+prev_left_angle, prev_right_angle = 0, 0
 
+ptime = 0
+sec = 0
 prev_lms = []
 detect = False
 times = []
 
-# cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
-cap = cv2.VideoCapture('release.mp4')
+# cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture('Ahn.mp4')
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_w)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_h)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-out = cv2.VideoWriter('body1.avi', fourcc, 30, (frame_w, frame_h * 2))
+out = cv2.VideoWriter('body.avi', fourcc, 30, (frame_w, frame_h * 2))
 
 print('종료 esc 버튼')
 
 while cap.isOpened():
-
-    leftboard = np.zeros((frame_h, half_width, 3), np.uint8)
-    rightboard = np.zeros((frame_h, half_width, 3), np.uint8)
+    leftboard = np.zeros((frame_h, half_w, 3), np.uint8)
+    rightboard = np.zeros((frame_h, half_w, 3), np.uint8)
     rightboard[:, 0] = [0, 0, 255]
     ret, image = cap.read()
     # image = cv2.flip(image, 1)
@@ -69,12 +63,12 @@ while cap.isOpened():
 
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = pose.process(rgb)
+    pose_lms, pose_abs_lms = poses(results, frame_shape)
     # results = holistic.process(rgb)
     # pose_lms, pose_abs_lms = holistics(results, frame_shape)
-    pose_lms, pose_abs_lms = poses(results, frame_shape)
 
     if pose_abs_lms is not None:
-        pose_abs_lms, prev_lms, detect = low_pass_filter(pose_abs_lms, prev_lms, detect, 5)
+        pose_abs_lms, prev_lms, detect = low_pass_filter(pose_abs_lms, prev_lms, detect, 10)
         # 각도 계산
         left_angle = angle_calc(pose_abs_lms, left_idx)
         right_angle = angle_calc(pose_abs_lms, right_idx)
@@ -82,7 +76,7 @@ while cap.isOpened():
         right_angle_list.append(right_angle)
         
     else:
-        # pose_abs_lms = prev_lms
+        left_angle, right_angle = 0, 0
         left_angle_list.append(0)
         right_angle_list.append(0)
     
@@ -95,8 +89,8 @@ while cap.isOpened():
         angle_record.clear()
         times.clear()
 
-    left_angle_list, _, _ = get_angle_board(leftboard, left_angle_list, before_angle, before_idx)
-    right_angle_list, _, _ = get_angle_board(rightboard, right_angle_list, before_angle, before_idx)
+    left_angle_list, _, _ = get_angle_board(leftboard, frame_shape, left_angle_list, before_angle, before_idx)
+    right_angle_list, _, _ = get_angle_board(rightboard, frame_shape, right_angle_list, before_angle, before_idx)
 
     ctime = time.time()
     fps = 1 / (ctime - ptime)
@@ -109,8 +103,8 @@ while cap.isOpened():
     cv2.putText(image, f'{sec:.5f}sec', (frame_w-200, frame_h-20), cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 0, 255), 1)
 
     cv2.putText(image, f'fps:{int(fps)}', (10, 20), cv2.FONT_HERSHEY_TRIPLEX, 0.6, (255, 0, 0), 1)
-    putText_graph(leftboard, 'left', left_angle)
-    putText_graph(rightboard, 'right', right_angle)
+    putText_graph(leftboard, frame_shape, 'left', left_angle)
+    putText_graph(rightboard, frame_shape, 'right', right_angle)
 
     if pose_lms is not None:
         draw_landmark(image, pose_abs_lms)
@@ -118,8 +112,8 @@ while cap.isOpened():
         draw_armline(image, pose_abs_lms, right_idx)
 
     backboard[:frame_h, :frame_w] = image
-    backboard[frame_h:, :half_width] = leftboard
-    backboard[frame_h:, half_width:] = rightboard
+    backboard[frame_h:, :half_w] = leftboard
+    backboard[frame_h:, half_w:] = rightboard
 
     cv2.imshow('backboard', backboard)
     out.write(backboard)
