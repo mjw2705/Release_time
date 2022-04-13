@@ -13,3 +13,8 @@
 
 
 ## Demo
+### 활 검출 
+![bow_demo](bow_demo.gif)
+
+### 바디 스켈레톤 검출
+![body_demo](body_demo.gif)
