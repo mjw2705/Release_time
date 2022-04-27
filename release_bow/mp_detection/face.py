@@ -5,7 +5,7 @@ import mediapipe as mp
 class FaceDetector:
     def __init__(self, frame_shape):
         self.face = mp.solutions.face_detection.FaceDetection(model_selection=0,
-                                                            min_detection_confidence=0.6)
+                                                            min_detection_confidence=0.5)
         self.bbox = None
         self.width = frame_shape[0]
         self.height = frame_shape[1]

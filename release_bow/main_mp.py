@@ -1,8 +1,8 @@
 import time
 import numpy as np
 import cv2
-# from mp_detection.pose import PoseDetector
-# from mp_detection.face_mesh import FaceMeshDetector
+from mp_detection.pose import PoseDetector
+from mp_detection.face_mesh import FaceMeshDetector
 from mp_detection.face import FaceDetector
 
 from utils import *
@@ -31,10 +31,10 @@ cap.set(cv2.CAP_PROP_FPS, 30)
 fps = cap.get(cv2.CAP_PROP_FPS)
 delay = round(1000/fps)
 
-# fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-# out = cv2.VideoWriter('bow.avi', fourcc, 30, (frame_shape))
+fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+out = cv2.VideoWriter('bow.avi', fourcc, 30, (frame_shape))
 
-module = FaceDetector(frame_shape)
+detector = FaceDetector(frame_shape)
 
 while cap.isOpened():
     success, image = cap.read()
@@ -44,9 +44,9 @@ while cap.isOpened():
         print("Ignoring empty camera frame.")
         break
     
-    is_real = module.process(image)
-    if is_real:
-        bbox = module.get_face_rect()
+    is_detect = detector.process(image)
+    if is_detect:
+        bbox = detector.get_face_rect()
         
         bbox, prev, detect = low_pass_filter(bbox, prev, detect, 8)
         sx, sy, ex, ey = bbox
@@ -85,7 +85,6 @@ while cap.isOpened():
     else:
         pass
 
-
     ctime = time.time()
     fps = 1 / (ctime - ptime)
     ptime = ctime
@@ -98,11 +97,10 @@ while cap.isOpened():
     cv2.putText(image, f'bow : {bow_state}', (10, height-20), cv2.FONT_HERSHEY_TRIPLEX, 0.9, (0, 0, 255), 1)
     cv2.imshow('Bow detection', image)
 
-    # out.write(image)
+    out.write(image)
     if cv2.waitKey(delay) & 0xFF == 27:
         break
-    
 
-# out.release()
+out.release()
 cap.release()
 cv2.destroyAllWindows()
