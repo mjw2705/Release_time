@@ -1,0 +1,9 @@
+{
+    "use_video": false,
+    "video_path": "Ahn.mp4",
+    "use_camera": true,
+    "camera_id": 1,
+    "detect_bow": true,
+    "detect_body": true,
+    "display_size": [640, 480]
+}
