@@ -1,40 +1,13 @@
 import cv2
+import math
 import numpy as np
-import mediapipe as mp
 
 
-left_idx = [11, 13, 15]
-right_idx = [12, 14, 16]
-
-def holistics(result, frame_shape):
-    if result.face_landmarks is None:
-        print('No face')
-    else:
-        pose_lms = np.zeros((33, 4))
-        pose_abs_lms = np.zeros((33, 2))
-
-        for j, lm in enumerate(result.pose_landmarks.landmark):
-            pose_lms[j] = [lm.x, lm.y, lm.z, lm.visibility]
-            pose_abs_lms[j] = [int(lm.x * frame_shape[0]), int(lm.y * frame_shape[1])]
-        
-        return pose_lms, pose_abs_lms
-    return None, None
-
-
-def poses(results, frame_shape):
-    if results.pose_landmarks is None:
-        print('No pose')
-    else:
-        pose_lms = np.zeros((33, 3))
-        pose_abs_lms = np.zeros((33, 2))
-
-        for j, lm in enumerate(results.pose_landmarks.landmark):
-            pose_lms[j] = [lm.x, lm.y, lm.z]
-            pose_abs_lms[j] = [int(lm.x * frame_shape[0]), int(lm.y * frame_shape[1])]
-
-        return pose_lms, pose_abs_lms
-
-    return None, None
+def Convert_abs_lms(frame_shape, lms):
+    abs_lms = np.array(lms)
+    abs_lms[:, 0] = abs_lms[:, 0] * frame_shape[0]
+    abs_lms[:, 1] = abs_lms[:, 1] * frame_shape[1]
+    return abs_lms[:, :2]
 
 def low_pass_filter(cur, prev, detect, gap):
     if detect:
